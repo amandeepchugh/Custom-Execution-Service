@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 
 import concurreny.executorService.ExecutorService;
 import concurreny.executorService.ExecutorServiceImpl;
-import concurreny.executorService.FutureObj;
+import concurreny.executorService.Future;
 
 public class MainClass {
 
@@ -17,7 +17,7 @@ public class MainClass {
 		}
 		Callable<Integer> sumOfNumbers = new CallableSumOfArray(numbers);
 	
-		FutureObj<Integer> futureObj = executorService.submit(sumOfNumbers);
+		Future<Integer> futureObj = executorService.submit(sumOfNumbers);
 		Integer result = futureObj.getResult();
 		
 		System.out.println(result);

@@ -1,6 +1,6 @@
 package concurreny.executorService;
 
-public class FutureObj<T> {
+public class Future<T> {
 
 	T result;
 	CompletionStatus completionStatus = CompletionStatus.NOT_ASSIGNED;

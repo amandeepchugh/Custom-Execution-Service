@@ -18,9 +18,9 @@ public class ExecutorServiceImpl implements ExecutorService {
 	}
 
 	@Override
-	public <T> FutureObj<T> submit(Callable<T> callable) throws Exception {
+	public <T> Future<T> submit(Callable<T> callable) throws Exception {
 
-		FutureObj<T> futureObj = new FutureObj<T>();
+		Future<T> futureObj = new Future<T>();
 
 		Task<T> task = new Task<T>(callable, futureObj);
 
@@ -55,7 +55,7 @@ public class ExecutorServiceImpl implements ExecutorService {
 						task = taskQueue.poll();
 					}
 					Callable<?> callable = task.getCallable();
-					FutureObj<?> futureObj = task.getFutureObj();
+					Future<?> futureObj = task.getFutureObj();
 					futureObj.completionStatus = CompletionStatus.IN_PROGRESS;
 
 					Object result = callable.call();

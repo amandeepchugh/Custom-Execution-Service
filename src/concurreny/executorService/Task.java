@@ -5,10 +5,10 @@ import java.util.concurrent.Callable;
 
 public class Task<T> {
 	private Callable<T> callable;
-	private FutureObj<T> futureObj;
+	private Future<T> futureObj;
 	
 
-	public Task(Callable<T> callable, FutureObj<T> futureObj) {
+	public Task(Callable<T> callable, Future<T> futureObj) {
 		this.callable = callable;
 		this.futureObj = futureObj;
 	}
@@ -18,7 +18,7 @@ public class Task<T> {
 	}
 
 
-	public FutureObj<T> getFutureObj() {
+	public Future<T> getFutureObj() {
 		return futureObj;
 	}
 
