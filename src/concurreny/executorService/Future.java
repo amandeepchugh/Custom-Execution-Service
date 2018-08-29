@@ -15,9 +15,7 @@ public class Future<T> {
 					this.wait();
 				}
 
-			}
-
-			else if (completionStatus.equals(CompletionStatus.IN_PROGRESS)) {
+			} else if (completionStatus.equals(CompletionStatus.IN_PROGRESS)) {
 
 				System.out.println("waiting for thread to complete " + System.currentTimeMillis());
 
@@ -25,6 +23,9 @@ public class Future<T> {
 					this.wait();
 				}
 
+			} else if (completionStatus.equals(CompletionStatus.INTERRUPTED) || 
+					completionStatus.equals(CompletionStatus.REJECTED)) {
+				result = null;
 			}
 
 		} catch (InterruptedException e) {

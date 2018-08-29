@@ -1,6 +1,7 @@
 package concurreny.executorService.Main;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import concurreny.executorService.ExecutorService;
@@ -12,15 +13,31 @@ public class MainClass {
 	public static void main(String[] args) throws Throwable {
 		ExecutorService executorService = new ExecutorServiceImpl();
 		ArrayList<Integer> numbers = new ArrayList<Integer>();
+		
 		for (int i = 1; i <= 100; i++) {
 			numbers.add(i);
 		}
-		Callable<Integer> sumOfNumbers = new CallableSumOfArray(numbers);
-	
-		Future<Integer> futureObj = executorService.submit(sumOfNumbers);
-		Integer result = futureObj.getResult();
 		
-		System.out.println(result);
+		List<Callable<Integer>> sumOfNumbers = new ArrayList<Callable<Integer>>();
+		for (int i = 0; i < 100; i++) {
+			Callable<Integer> sumofNumber = new CallableSumOfArray(numbers);
+			sumOfNumbers.add(sumofNumber);
+			
+		}
+	
+		List<Future<Integer>> futureObjs = new ArrayList<>();
+		for (int i = 0; i < sumOfNumbers.size(); i++) {
+			Future<Integer> futureObj = executorService.submit(sumOfNumbers.get(i));
+			futureObjs.add(futureObj);
+		}
+		
+		executorService.shutdown();
+		
+		for (int i = 0; i < futureObjs.size(); i++) {
+			System.out.println(i + " result " + futureObjs.get(i).getResult());
+		}
+		
+		
 	}
 
 }
@@ -41,7 +58,7 @@ class CallableSumOfArray implements Callable<Integer> {
 		for (Integer t : numbers) {
 			sum += t.intValue();
 		}
-		Thread.sleep(3000);
+		Thread.sleep(3);
 		return sum;
 	}
 	

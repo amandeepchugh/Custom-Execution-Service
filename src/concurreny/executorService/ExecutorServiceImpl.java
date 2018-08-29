@@ -1,5 +1,7 @@
 package concurreny.executorService;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,7 +23,7 @@ public class ExecutorServiceImpl implements ExecutorService {
 
 	@Override
 	public <T> Future<T> submit(Callable<T> callable) throws RejectedExecutionException {
-		
+
 		if (gracefulShutdown) {
 			throw new RejectedExecutionException();
 		}
@@ -49,21 +51,29 @@ public class ExecutorServiceImpl implements ExecutorService {
 		@Override
 		public void run() {
 
-			try {
+			while (true) {
 
-				while (true) {
-					
-					if (gracefulShutdown && taskQueue.isEmpty()) {
-						break;
-					}
-					
-					Task<?> task = null;
+				if (isInterrupted()) {
+					break;
+				}
+
+				Task<?> task = null;
+				try {
 					synchronized (taskQueue) {
-						System.out.println(Thread.currentThread().getName() + " is waiting for task");
-						taskQueue.wait();
-						System.out.println(Thread.currentThread().getName() + " is starting to execute");
+						if (gracefulShutdown && taskQueue.isEmpty()) {
+							break;
+						}
+
+						if (taskQueue.isEmpty()) {
+							System.out.println(Thread.currentThread().getName() + " is waiting for task");
+							taskQueue.wait();
+							if (gracefulShutdown && taskQueue.isEmpty()) {
+								break;
+							}
+						}
 
 						task = taskQueue.poll();
+						System.out.println(Thread.currentThread().getName() + " is starting to execute");
 					}
 					Callable<?> callable = task.getCallable();
 					Future<?> futureObj = task.getFutureObj();
@@ -77,12 +87,22 @@ public class ExecutorServiceImpl implements ExecutorService {
 						futureObj.notify();
 					}
 
+				} catch (InterruptedException e) {
+					if (task != null) {
+						Future<?> futureObj = task.getFutureObj();
+						futureObj.completionStatus = CompletionStatus.INTERRUPTED;
+						synchronized (futureObj) {
+							futureObj.notify();
+						}
+						
+					}
+					break;
+					// log it
+					// do nothing?
+				} catch (Exception e) {
+					e.printStackTrace();
+					// throw new RuntimeException(e);??
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (Exception e) {
-
-				e.printStackTrace();
 			}
 
 		}
@@ -90,7 +110,31 @@ public class ExecutorServiceImpl implements ExecutorService {
 	}
 
 	@Override
-	public void shutDown() {
-		gracefulShutdown  = true;
+	public void shutdown() {
+		gracefulShutdown = true;
+		synchronized (taskQueue) {
+			taskQueue.notifyAll();
+		}
+	}
+
+	@Override
+	public List<Callable<?>> shutdownNow() {
+		shutdown();
+
+		for (Thread thread : threadPool) {
+			thread.interrupt();
+		}
+
+		List<Callable<?>> unexecutedCallables = new LinkedList<>();
+		synchronized (taskQueue) {
+			for (Task<?> task : taskQueue) {
+				unexecutedCallables.add(task.getCallable());
+				task.getFutureObj().completionStatus = CompletionStatus.REJECTED;
+			}
+			taskQueue.clear();
+		}
+
+		return unexecutedCallables;
+
 	}
 }
