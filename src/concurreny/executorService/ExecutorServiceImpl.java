@@ -3,12 +3,14 @@ package concurreny.executorService;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 
 public class ExecutorServiceImpl implements ExecutorService {
 
 	private static final int THREAD_POOL_SIZE = 1;
 	private Thread[] threadPool = new Thread[THREAD_POOL_SIZE];
 	private Queue<Task<?>> taskQueue = new LinkedBlockingQueue<>();
+	private boolean gracefulShutdown = false;
 
 	public ExecutorServiceImpl() {
 		for (int i = 0; i < threadPool.length; i++) {
@@ -18,7 +20,11 @@ public class ExecutorServiceImpl implements ExecutorService {
 	}
 
 	@Override
-	public <T> Future<T> submit(Callable<T> callable) throws Exception {
+	public <T> Future<T> submit(Callable<T> callable) throws RejectedExecutionException {
+		
+		if (gracefulShutdown) {
+			throw new RejectedExecutionException();
+		}
 
 		Future<T> futureObj = new Future<T>();
 
@@ -46,6 +52,11 @@ public class ExecutorServiceImpl implements ExecutorService {
 			try {
 
 				while (true) {
+					
+					if (gracefulShutdown && taskQueue.isEmpty()) {
+						break;
+					}
+					
 					Task<?> task = null;
 					synchronized (taskQueue) {
 						System.out.println(Thread.currentThread().getName() + " is waiting for task");
@@ -76,5 +87,10 @@ public class ExecutorServiceImpl implements ExecutorService {
 
 		}
 
+	}
+
+	@Override
+	public void shutDown() {
+		gracefulShutdown  = true;
 	}
 }
