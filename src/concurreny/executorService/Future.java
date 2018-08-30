@@ -7,30 +7,29 @@ public class Future<T> {
 
 	public T getResult() {
 		try {
-			if (completionStatus.equals(CompletionStatus.NOT_ASSIGNED)) {
+			synchronized (this) {
 
-				System.out.println("future obj waiting for the task to be assigned " + System.currentTimeMillis());
+				if (completionStatus.equals(CompletionStatus.NOT_ASSIGNED)) {
 
-				synchronized (this) {
+					System.out.println("future obj waiting for the task to be assigned " + System.currentTimeMillis());
 					this.wait();
-				}
 
-			} else if (completionStatus.equals(CompletionStatus.IN_PROGRESS)) {
+				} else if (completionStatus.equals(CompletionStatus.IN_PROGRESS)) {
 
-				System.out.println("waiting for thread to complete " + System.currentTimeMillis());
-
-				synchronized (this) {
+					System.out.println("waiting for thread to complete " + System.currentTimeMillis());
 					this.wait();
-				}
 
-			} else if (completionStatus.equals(CompletionStatus.INTERRUPTED) || 
-					completionStatus.equals(CompletionStatus.REJECTED)) {
-				result = null;
+				}
 			}
-
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+
+		if (completionStatus.equals(CompletionStatus.INTERRUPTED)
+				|| completionStatus.equals(CompletionStatus.REJECTED)) {
+			result = null;
+		}
+
 		return result;
 	}
 

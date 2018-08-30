@@ -10,6 +10,7 @@ import concurreny.executorService.Future;
 
 public class MainClass {
 
+	public static final int NUMBER_OF_TASKS = 200;
 	public static void main(String[] args) throws Throwable {
 		ExecutorService executorService = new ExecutorServiceImpl();
 		ArrayList<Integer> numbers = new ArrayList<Integer>();
@@ -19,7 +20,7 @@ public class MainClass {
 		}
 		
 		List<Callable<Integer>> sumOfNumbers = new ArrayList<Callable<Integer>>();
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < NUMBER_OF_TASKS; i++) {
 			Callable<Integer> sumofNumber = new CallableSumOfArray(numbers);
 			sumOfNumbers.add(sumofNumber);
 			
@@ -31,7 +32,7 @@ public class MainClass {
 			futureObjs.add(futureObj);
 		}
 		
-		executorService.shutdown();
+		executorService.shutdownNow();
 		
 		for (int i = 0; i < futureObjs.size(); i++) {
 			System.out.println(i + " result " + futureObjs.get(i).getResult());

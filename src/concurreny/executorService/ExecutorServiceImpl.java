@@ -5,14 +5,16 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.RejectedExecutionException;
 
 public class ExecutorServiceImpl implements ExecutorService {
 
-	private static final int THREAD_POOL_SIZE = 1;
+	private static final int THREAD_POOL_SIZE = 100;
 	private Thread[] threadPool = new Thread[THREAD_POOL_SIZE];
-	private Queue<Task<?>> taskQueue = new LinkedBlockingQueue<>();
+	private Queue<Task<?>> taskQueue = new LinkedList<Task<?>>();
 	private boolean gracefulShutdown = false;
+	private int taskCount = 0;
 
 	public ExecutorServiceImpl() {
 		for (int i = 0; i < threadPool.length; i++) {
@@ -35,7 +37,7 @@ public class ExecutorServiceImpl implements ExecutorService {
 		synchronized (taskQueue) {
 			taskQueue.add(task);
 			taskQueue.notify();
-			System.out.println("task queue notified");
+			System.out.println("task queue notified " + ++taskCount);
 
 		}
 
@@ -63,13 +65,19 @@ public class ExecutorServiceImpl implements ExecutorService {
 						if (gracefulShutdown && taskQueue.isEmpty()) {
 							break;
 						}
-
-						if (taskQueue.isEmpty()) {
+						boolean stopThread = false;
+						while (taskQueue.isEmpty()) {
 							System.out.println(Thread.currentThread().getName() + " is waiting for task");
 							taskQueue.wait();
+							
 							if (gracefulShutdown && taskQueue.isEmpty()) {
+								stopThread = true;
 								break;
 							}
+							
+						}
+						if (stopThread) {
+							break;
 						}
 
 						task = taskQueue.poll();
@@ -94,7 +102,7 @@ public class ExecutorServiceImpl implements ExecutorService {
 						synchronized (futureObj) {
 							futureObj.notify();
 						}
-						
+
 					}
 					break;
 					// log it
